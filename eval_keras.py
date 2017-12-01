@@ -30,11 +30,13 @@ def load_model_and_classmap(model_file, class_map_file):
 
     return model, class_map
 
+
 def evaluate_model(model, img_file, class_map, top_n):
     img = image.load_img(img_file, target_size=(299,299))
     imarr = image.img_to_array(img)
     imarr = np.expand_dims(imarr, axis=0) # add zeroth axis of single element for "batch"
     pred = model.predict(imarr)
+
     if top_n > 0:
         logger.info('Reporting top {} results.'.format(top_n))
         top_idx = len(class_map.keys()) - top_n
