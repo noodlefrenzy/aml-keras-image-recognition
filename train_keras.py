@@ -171,15 +171,16 @@ def write_model_desc(options, model_path, model_name, classes, weights, train_ge
                         except:
                             logger.warn('Failed to log metric {} to AzureML'.format(metric))
 
-def load_images(img_path, flip, rotate, zoom, shear, batch_size, img_size,
+
+def load_images(img_path, vflip, hflip, rotate, zoom, shear, batch_size, img_size,
                 seed):
     logger.info(
         'Loading training data from {}. {}, rotate={}, zoom={}, shear={}. Batch size={}. Image size={}.'.
-        format(img_path, 'flip' if flip else 'no flip', rotate, zoom, shear,
+        format(img_path, 'vflip' if vflip else 'no vflip', 'hflip' if hflip else 'no hflip', rotate, zoom, shear,
                batch_size, img_size))
     training = image.ImageDataGenerator(
-        horizontal_flip=flip,
-        vertical_flip=flip,
+        horizontal_flip=hflip,
+        vertical_flip=vflip,
         rotation_range=rotate,
         zoom_range=zoom,
         shear_range=shear)
@@ -202,7 +203,8 @@ def load_images(img_path, flip, rotate, zoom, shear, batch_size, img_size,
 def train_model(img_path,
                 model_type,
                 tf_log_dir,
-                flip=False,
+                vflip=False,
+                hflip=False,
                 rotate=0.,
                 zoom=0.,
                 shear=0.,
@@ -229,7 +231,7 @@ def train_model(img_path,
     model_details = model_types[model_type]
     base_model = model_details['model']()
     img_size = model_details['img_size']
-    train_gen, valid_gen = load_images(img_path, flip, rotate, zoom, shear,
+    train_gen, valid_gen = load_images(img_path, vflip, hflip, rotate, zoom, shear,
                                        batch_size, img_size, seed)
 
     if use_weights:
@@ -373,11 +375,18 @@ if __name__ == '__main__':
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
-        '--flip',
+        '--vflip',
         type=strtobool,
         default=False,
         help=
-        'Whether to augment training images with flips (horiz and vert). Defaults to False.'
+        'Whether to augment training images with vert flips. Defaults to False.'
+    )
+    parser.add_argument(
+        '--hflip',
+        type=strtobool,
+        default=False,
+        help=
+        'Whether to augment training images with horiz flips. Defaults to False.'
     )
     parser.add_argument(
         '--rotate',
@@ -511,7 +520,8 @@ if __name__ == '__main__':
         FLAGS.image_dir,
         FLAGS.model_type,
         FLAGS.tensorflow_logs,
-        flip=FLAGS.flip,
+        vflip=FLAGS.vflip,
+        hflip=FLAGS.hflip,
         rotate=FLAGS.rotate,
         zoom=FLAGS.zoom,
         shear=FLAGS.shear,
@@ -532,7 +542,8 @@ if __name__ == '__main__':
     os.makedirs(os.path.dirname(model_file), exist_ok=True)
     trained_model.save(model_file)
     aml_run_logger.log("hyperparameters", {
-        "flip": FLAGS.flip,
+        "vflip": FLAGS.vflip,
+        "hflip": FLAGS.hflip,
         "rotate": FLAGS.rotate,
         "zoom": FLAGS.zoom,
         "shear": FLAGS.shear,
